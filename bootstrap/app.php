@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Middleware\PreProcessor;
+use App\Http\Middleware\PostProcessor;
+
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -13,6 +16,16 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->redirectGuestsTo('/');
+        $middleware->alias([
+            'process-request' => PreProcessor::class,
+            'process-response' => PostProcessor::class,
+        ]);
+
+        $middleware->group('processor', [
+            PreProcessor::class,
+            PostProcessor::class,
+        ]);
+
         $middleware->validateCsrfTokens(except: [
             //'authenticate',
         ]);
