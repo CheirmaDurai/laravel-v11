@@ -12,11 +12,15 @@ class HomeController extends Controller
     public function index(HTTPRequest $request)
     {
         if (Auth::check()) {
-            $user = $request->user();
+            $user = [
+                'name' => $request->user()->name,
+                'email' => $request->user()->email,
+            ];
         } else {
-            $user = [];
+            $user = null;
         }
-        return response()->json(['User' => $user, 'data' => Employee::all()]);
+
+        return response()->json(['user' => $user, 'data' => Employee::all()]);
     }
 
     public function store(Request $request)

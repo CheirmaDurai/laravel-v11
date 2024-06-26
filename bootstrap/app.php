@@ -13,6 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->redirectGuestsTo('/');
+        $middleware->validateCsrfTokens(except: [
+            //'authenticate',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

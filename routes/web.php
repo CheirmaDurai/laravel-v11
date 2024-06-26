@@ -8,6 +8,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/token', [LoginController::class, 'getCSRFToken']);
 Route::get('/authenticate', [LoginController::class, 'authenticate']);
 
 Route::resource('home', HomeController::class)->middleware('auth');;
