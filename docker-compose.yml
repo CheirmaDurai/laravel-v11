@@ -1,46 +1,79 @@
-version: "3.7"
 services:
+  # The Laravel App (PHP-FPM)
   app:
     build:
       args:
         user: cheirmadurai
         uid: 1000
-      context: ./
+      context: .
       dockerfile: Dockerfile
-    image: laravel-app
-    container_name: laravel-app-container
+    image: laravel-v11-image
+    container_name: laravel-v11-app
     restart: unless-stopped
-    working_dir: /var/www/
+    working_dir: /var/www
     volumes:
       - ./:/var/www
     networks:
-      - laravel-app-network
+      - laravel-v11
+
+  # MySQL Database
   db:
     image: mysql:8.0
-    container_name: laravel-app-db
-    restart: unless-stopped
-    environment:
-      MYSQL_DATABASE: ${DB_DATABASE}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_USER: ${DB_USERNAME}
-      SERVICE_TAGS: dev
-      SERVICE_NAME: mysql
-    volumes:
-      - ./docker-compose/mysql:/docker-entrypoint-initdb.d
-    networks:
-      - laravel-app-network
-  nginx:
-    image: nginx:alpine
-    container_name: laravel-app-nginx
+    container_name: laravel-v11-db
     restart: unless-stopped
     ports:
-      - 8000:80
+      - "33060:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: mysql
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - laravel-v11-dbdata:/var/lib/mysql
+    networks:
+      - laravel-v11
+
+  # Nginx Web Server
+  webserver:
+    image: nginx:alpine
+    container_name: laravel-v11-webserver
+    restart: unless-stopped
+    ports:
+      - "8080:80"
     volumes:
       - ./:/var/www
-      - ./docker-compose/nginx:/etc/nginx/conf.d/
+      - ./docker-compose/nginx:/etc/nginx/conf.d
     networks:
-      - laravel-app-network
+      - laravel-v11
+
+  # The Memcached Server
+  memcached:
+    image: memcached:alpine
+    container_name: laravel-v11-memcached
+    ports:
+      - "11212:11211"
+    networks:
+      - laravel-v11
+
+  # GUI Tool to inspect the cache on localhost:8082
+  memcached-admin:
+    image: robinn/phpcacheadmin:latest
+    container_name: laravel-v11-memcached-admin
+    ports:
+      - "8082:80"
+    environment:
+      # Tell the engine where your memcached daemon container is
+      - PCA_MEMCACHED_0_HOST=memcached
+      - PCA_MEMCACHED_0_PORT=11211
+    depends_on:
+      - memcached
+    networks:
+      - laravel-v11
+
 networks:
-  laravel-app-network:
+  laravel-v11:
     driver: bridge
+
+volumes:
+  laravel-v11-dbdata:
+    driver: local

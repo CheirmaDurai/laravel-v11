@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Http\Request as HTTPRequest;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Employee;
+use Illuminate\Support\Facades\Cache;
+use App\Models\User;
 
 class HomeController extends Controller
 {
@@ -20,34 +21,18 @@ class HomeController extends Controller
             $user = null;
         }
 
-        return response()->json(['user' => $user, 'data' => Employee::all()]);
-    }
+        if (Cache::has('users')) {
+            $users = Cache::get('users');
+            $cache = 'HIT';
+        } else {
+            $users = User::all();
+            Cache::put('users', $users, 60);
+            // $users = Cache::remember('users', 60, function () {
+            //     return User::all();
+            // });
+            $cache = 'No-HIT';
+        }
 
-    public function store(Request $request)
-    {
-        $employee = Employee::create(
-            [
-                'name' => Request::post('name'),//'Raja ' . time(),
-            ]
-        );
-        return response()->json($employee);
-    }
-
-    public function update(Request $request, $id)
-    {
-        $employee = Employee::find($id);
-        #$employeeOld = $employee->$request->toArray();
-        $employee = $employee->update(
-            [
-                'name' => Request::post('name'),
-            ]
-        );
-        return response()->json($employee);
-    }
-
-    public function destroy(Request $request)
-    {
-        //print_r(Request::all());
-        return 'DELETE request';
+        return response()->json(['user' => $user, 'data' => $users, 'cache' => $cache]);
     }
 }
